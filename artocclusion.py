@@ -2,48 +2,47 @@ import sys
 import os
 import cv2
 import random
+import shutil
 import numpy as np
 import matplotlib.pyplot as plt
 
-def main():
-	setup(sys.argv[1], sys.argv[2])
 
-
-# Takes in two arguments: a file path and a destination path/directory
-def convert_img(path, dest=None):
-	if not os.path.exists(path):
-		print("Path {} not found".format(path))
+# Add artificial occlusion on one image: takes in a file path and a destination path
+# Displays the result in plot
+def convert_img(src, dst=None):
+	if not os.path.exists(src):
+		print("Path {} not found".format(src))
 		return
-	elif not os.path.isfile(path):
-		print("Path {} is not a valid image file".format(path))
+	elif not os.path.isfile(src):
+		print("Path {} is not a valid file path".format(src))
 		return
 
-	plt.imshow(cv2.cvtColor(cv2.imread(path), cv2.COLOR_BGR2RGB))
+	plt.imshow(cv2.cvtColor(cv2.imread(src), cv2.COLOR_BGR2RGB))
 	plt.show()
 
-	img = img_patch(path, dest)
+	if dst is None:
+		# If no destination is given, set default path in the same directory
+		name, ext = os.path.splitext(src)
+		dst = name + "OCC" + ext
+	elif os.path.isdir(dst):
+		# If only a destination directory is given, set default path
+		filename = os.path.basename(src)
+		name, ext = os.path.splitext(filename)
+		dst = os.path.join(dst, name + "OCC" + ext)
+
+	img = img_patch(src, dst)
 
 	plt.imshow(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
 	plt.show()
 
-
-def img_patch(path, dest):
-	if dest is None:
-		# If no destination is given, set default path in the same directory
-		name, ext = os.path.splitext(path)
-		dest = name + "OCC" + ext
-	elif os.path.isdir(dest):
-		# If only a destination directory is given, set default path
-		filename = os.path.basename(path)
-		name, ext = os.path.splitext(filename)
-		dest = os.path.join(dest, name + "OCC" + ext)
-	
-	img = cv2.imread(path)
+# Helper function that creates occlusion on one image
+def img_patch(src, dst=None):
+	img = cv2.imread(src)
 	height, width, _ = img.shape
 
 	random.seed()
-	patch_height = random.randint(0,int(height/2))
-	patch_width = random.randint(0,int(width/2))
+	patch_height = random.randint(int(height/4),int(height/2))
+	patch_width = random.randint(int(width/4),int(width/2))
 	row = random.randint(0,height-patch_height)
 	col = random.randint(0,width-patch_width)
 
@@ -54,15 +53,41 @@ def img_patch(path, dest):
 
 	img[row:row+patch_height, col:col+patch_width] = patch_random
 
-	cv2.imwrite(dest, img)
+	if dst is None:
+		cv2.imwrite(src, img)
+	else:
+		cv2.imwrite(dst, img)
 	return img
 
 
-if __name__=='__main__':
-	main()
+def dir_patch(src=os.getcwd(), dst=None):
+	if dst is None:
+		print("No destination directory name given. Stopping...")
+		return
 
-	# tests
-    # convert_img('IMG_3724.jpeg')
-    # convert_img('sample_data/IMG_1887.JPG')
-    # convert_img('IMG_3723.JPG','sample_data/newpath.jpg')
-    # convert_img('IMG_9673.PNG','sample_data')
+	# NOTE: Overwrites existing directory of the given name if there is one
+	if os.path.exists(dst):
+		shutil.rmtree(dst)
+
+	try:
+		shutil.copytree(src, dst)
+	except shutil.Error as e: # Directories are the same
+		print('Directory not copied. Error: %s' % e)
+	except OSError as e: # Any error saying that src doesn't exist
+		print('Directory not copied. Error: %s' % e)
+
+	for root, dirs, files in os.walk(dst):
+		for filename in files:
+			img_patch(os.path.abspath(os.path.join(root, filename)))
+	return
+
+
+if __name__=='__main__':
+	dir_patch('sample_data', 'new_path_name')
+
+	# Tests:
+	# setup(sys.argv[1], sys.argv[2])
+	# convert_img('IMG_3724.jpeg')
+	# convert_img('sample_data/IMG_1887.JPG')
+	# convert_img('IMG_3723.JPG','sample_data/newpath.jpg')
+	# convert_img('IMG_9673.PNG','sample_data')

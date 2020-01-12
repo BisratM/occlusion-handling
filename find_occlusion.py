@@ -51,9 +51,12 @@ def find_overlapping(cars_bboxes):
 
 
 cwd = os.getcwd()
-occluded_imgs = []
+occluded_imgs = {}
+occluded_imgs['test'] = []
+occluded_imgs['train'] = []
+occluded_imgs['val'] = []
 for subdir, dirs, files in os.walk(cwd):
-	type = subdir.split('\\')[-2]
+	dir_type = subdir.split('\\')[-2]
 	for file in files:
 		if(file.split('.')[-1] == 'json'):
 			with open(os.path.join(subdir, file)) as json_file:
@@ -63,7 +66,7 @@ for subdir, dirs, files in os.walk(cwd):
 					if obj["label"] == "car":
 						cars_bboxes.append(get_bbox(obj["polygon"]))
 				if find_overlapping(cars_bboxes):
-					occluded_imgs.append(file)
-
-
+					occluded_imgs[dir_type].append(file)
+with open('occluded_imgs.json', 'w') as outfile:
+	json.dump(occluded_imgs, outfile)
 

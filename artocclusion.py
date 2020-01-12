@@ -144,10 +144,10 @@ def overlap(a, b):
 	b_xmax = b[0]+b[2]
 	b_ymax = b[1]+b[3]
 	dx = min(a_xmax, b_xmax) - max(a[0], b[0])
-    dy = min(a_ymax, b_ymax) - max(a[1], b[1])
-    if (dx>=0) and (dy>=0):
-        return (dx*dy)
-    return 0
+	dy = min(a_ymax, b_ymax) - max(a[1], b[1])
+	if (dx>=0) and (dy>=0):
+		return (dx*dy)
+	return 0
 
 
 # Makes a recursive copy of a given directory (defaults to current working directory) to a
@@ -186,7 +186,7 @@ def dir_patch(src=os.getcwd(), dst=None):
 
 
 if __name__=='__main__':
-	dir_patch('sample_data', 'new_path_name')
+	dir_patch('sample_data', 'new_data')
 
 	# Tests:
 	# setup(sys.argv[1], sys.argv[2])

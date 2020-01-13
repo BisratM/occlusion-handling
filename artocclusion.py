@@ -84,7 +84,8 @@ def img_patch(src, dst=None):
 def generate_random_lines(imshape, slant, drop_length):
 	random.seed()
 	drops = []
-	for i in range(1000):
+	numdrops = np.random.randint(500,1000)
+	for i in range(numdrops):
 		x = np.random.randint(0,imshape[1]-slant)
 		y = np.random.randint(0,imshape[0]-drop_length) 
 		drops.append((x,y))

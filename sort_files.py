@@ -7,9 +7,10 @@ with open('occluded_imgs.json') as json_file:
 	data = json.load(json_file)
 	filenames = data['pascal_val2012.json']
 
+# Fill this out manually
 directory = 'Annotations'
 newDirectory = 'Annotations2'
-ext = '.jpg'
+ext = '.xml'
 
 if not os.path.exists(newDirectory):
 	os.makedirs(newDirectory)

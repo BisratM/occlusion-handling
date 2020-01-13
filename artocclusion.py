@@ -65,6 +65,46 @@ def img_patch(src, dst=None):
 	return img
 
 
+# Adapted from https://www.freecodecamp.org/news/image-augmentation-make-it-rain-make-it-snow-how-to-modify-a-photo-with-machine-learning-163c0cb3843f/
+def generate_random_lines(imshape, slant, drop_length):
+	random.seed()
+	drops = []
+	for i in range(1000):
+		x = np.random.randint(0,imshape[1]-slant)
+		y = np.random.randint(0,imshape[0]-drop_length) 
+		drops.append((x,y))
+	return drops
+
+
+# Helper that artificially adds rain over a single image. Takes in the file path
+# and the optional destination path (if dst not given, it overwrites the original file).
+# Adapted from https://www.freecodecamp.org/news/image-augmentation-make-it-rain-make-it-snow-how-to-modify-a-photo-with-machine-learning-163c0cb3843f/
+def add_rain(src, dst=None):
+	# name, ext = os.path.splitext(src)
+	# if not ext == '.jpg':
+	# 	return
+	img = cv2.imread(src)
+	imshape = img.shape
+	random.seed()
+	slant = np.random.randint(-5,5)
+	drop_length = np.random.randint(int(imshape[0]/100), int(imshape[0]/40))
+	drop_width = 1
+	drop_color = (200,200,200) # Gray
+	rain_drops = generate_random_lines(imshape,slant,drop_length)
+	for rain_drop in rain_drops:
+		cv2.line(img,(rain_drop[0],rain_drop[1]),(rain_drop[0]+slant,rain_drop[1]+drop_length),drop_color,drop_width)
+	image = cv2.blur(img,(5,5)) # Add slight blur
+	brightness_coefficient = 0.9 # Add slight shadow
+	image_HLS = cv2.cvtColor(image,cv2.COLOR_RGB2HLS) # Convert to HLS    
+	image_HLS[:,:,1] = image_HLS[:,:,1]*brightness_coefficient ## scale pixel values down for channel 1(Lightness)    
+	image_RGB = cv2.cvtColor(image_HLS,cv2.COLOR_HLS2RGB) # Convert to RGB
+	
+	if dst is None:
+		cv2.imwrite(src, image_RGB)
+	else:
+		cv2.imwrite(dst, image_RGB)
+	return image_RGB
+
 # Makes a recursive copy of a given directory (defaults to current working directory) to a
 # specified destination. Assuming all files are images, applies an occlusion patch to every
 # image copy in the destination directory.
@@ -95,7 +135,7 @@ def dir_patch(src=os.getcwd(), dst=None):
 
 
 if __name__=='__main__':
-	dir_patch('PASCALVOC2012', 'new_images')
+	dir_patch('sample_data', 'new_images')
 
 	# Tests:
 	# setup(sys.argv[1], sys.argv[2])

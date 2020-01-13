@@ -1,7 +1,8 @@
 import json
 import os
+import shutil
 
-THRESHOLD = 0.4
+THRESHOLD = 0.3
 
 # function adapted from https://www.pyimagesearch.com/2016/11/07/intersection-over-union-iou-for-object-detection/
 def computeIOU(boxA, boxB):
@@ -22,28 +23,22 @@ def computeIOU(boxA, boxB):
 	# compute the intersection over union by taking the intersection
 	# area and dividing it by the sum of prediction + ground-truth
 	# areas - the interesection area
-	iou = interArea / float(boxAArea + boxBArea - interArea)
- 
+	iou = 0.0
+	try:
+		iou = interArea / float(boxAArea + boxBArea - interArea)
+	except:
+		print("divide by 0")
+
 	# return the intersection over union value
 	return iou
 
-def get_bbox(polygon):
-	min_x = polygon[0][0]
-	min_y = polygon[0][1]
-	max_x = polygon[0][0]
-	max_y = polygon[0][1]
-	for coord in polygon:
-		min_x = min(min_x, coord[0])
-		min_y = min(min_y, coord[1])
-		max_x = max(max_x, coord[0])
-		max_y = max(max_y, coord[1])
-	return (min_x, min_y, max_x, max_y)
-
-def find_overlapping(cars_bboxes):
+def find_overlapping(cars_bboxes, i_name):
 	for idxA, boxA in enumerate(cars_bboxes):
 		for idxB, boxB in enumerate(cars_bboxes):
 			if(idxA == idxB):
 				continue
+			if(i_name == "2009_002613"):
+				print(computeIOU(boxA, boxB))
 			if(computeIOU(boxA, boxB) >= THRESHOLD):
 				return True
 	return False
@@ -52,21 +47,43 @@ def find_overlapping(cars_bboxes):
 
 cwd = os.getcwd()
 occluded_imgs = {}
-occluded_imgs['test'] = []
-occluded_imgs['train'] = []
-occluded_imgs['val'] = []
-for subdir, dirs, files in os.walk(cwd):
-	dir_type = subdir.split('\\')[-2]
-	for file in files:
-		if(file.split('.')[-1] == 'json'):
-			with open(os.path.join(subdir, file)) as json_file:
-				data = json.load(json_file)
-				cars_bboxes = []
-				for obj in data['objects']:
-					if obj["label"] == "car":
-						cars_bboxes.append(get_bbox(obj["polygon"]))
-				if find_overlapping(cars_bboxes):
-					occluded_imgs[dir_type].append(file)
-with open('occluded_imgs.json', 'w') as outfile:
-	json.dump(occluded_imgs, outfile)
+for (dirpath, dirnames, filenames) in os.walk(cwd):
+	for file in filenames:
+		if file.split('.')[-1] != 'json':
+			continue
+		occluded_imgs[file] = set([])
+		img_bboxes = {}
+		with open(os.path.join(dirpath, file)) as json_file:
+			data = json.load(json_file)
+			if(file == 'pascal_train2012.json'):
+				train_file_names = data['images']
+			for annot in data['annotations']:
+				img_name = str(annot['image_id'])[0:4] + '_' + str(annot['image_id'])[4:]
+				img_bboxes.setdefault(img_name, []).append(annot['bbox'])
+			for name, box_list in img_bboxes.items():
+				if find_overlapping(box_list, name):
+					occluded_imgs[file].add(name)
+print(len(occluded_imgs['pascal_train2012.json']))
+print(len(occluded_imgs['pascal_val2012.json']))
+import random
+random.shuffle(train_file_names)
+
+already_occluded = occluded_imgs['pascal_train2012.json']
+count = 0
+train_file_names = [x['file_name'] for x in train_file_names]
+
+# uncomment below blocks if needed
+
+# extract occluded data
+#while(count < 1000):
+#	shutil.move("./new_images/" + train_file_names[count], "./" + train_file_names[count])
+#	count += 1
+
+# extract artificial occluded data
+#for img in occluded_imgs['pascal_val2012.json']:
+#	shutil.move("./JPEGImages/" + img + ".jpg", "./" + img + ".jpg")
+
+# save jsons
+#with open('occluded_imgs.json', 'w') as outfile:
+#	json.dump(occluded_imgs, outfile)
 

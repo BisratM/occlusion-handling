@@ -1,4 +1,4 @@
-from pycocotools.coco import COCO
+# from pycocotools.coco import COCO
 
 import sys
 import os
@@ -8,21 +8,21 @@ import shutil
 import numpy as np
 import matplotlib.pyplot as plt
 
-d = {}
+# d = {}
 
-# Given the annotations json file, fills in dict d that maps filename to GT bounding boxes.
-def filenames_to_bboxes(annFile):
-	coco = COCO(annFile)
-	imgIds = coco.getImgIds()
+# # Given the annotations json file, fills in dict d that maps filename to GT bounding boxes.
+# def filenames_to_bboxes(annFile):
+# 	coco = COCO(annFile)
+# 	imgIds = coco.getImgIds()
 
-	for imgId in imgIds:
-		img = coco.loadImgs(ids=imgId)[0]
-		# This should be the file path relative to working dir
-		d[img['file_name']] = []
-		annIds = coco.getAnnIds(imgIds=imgId)
-		anns = coco.loadAnns(ids=annIds)
-		for ann in anns:
-			d[img['file_name']].append(ann['bbox'])
+# 	for imgId in imgIds:
+# 		img = coco.loadImgs(ids=imgId)[0]
+# 		# This should be the file path relative to working dir
+# 		d[img['file_name']] = []
+# 		annIds = coco.getAnnIds(imgIds=imgId)
+# 		anns = coco.loadAnns(ids=annIds)
+# 		for ann in anns:
+# 			d[img['file_name']].append(ann['bbox'])
 
 
 # Add artificial occlusion on one image using img_patch and displays the result in plot.
@@ -177,16 +177,16 @@ def dir_patch(src=os.getcwd(), dst=None):
 			filepath = os.path.abspath(os.path.join(root, filename))
 
 			# Replaces name with path to be used in img_patch func
-			if filename in d:
-				d[filepath] = d[filename]
-				del d[filename]
+			# if filename in d:
+			# 	d[filepath] = d[filename]
+			# 	del d[filename]
 
 			img_patch(filepath)
 	return
 
 
 if __name__=='__main__':
-	dir_patch('sample_data', 'new_data')
+	dir_patch('pics', 'new_images')
 
 	# Tests:
 	# setup(sys.argv[1], sys.argv[2])
